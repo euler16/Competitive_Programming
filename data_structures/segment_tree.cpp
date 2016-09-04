@@ -28,6 +28,7 @@ void update(vector<int> segTree, vector<int>arr, int val ,int index, int node, i
 	{
 		arr[index] += val;
 		segTree[node] += val;
+		return;
 	}
 
 	else
