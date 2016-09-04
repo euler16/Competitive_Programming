@@ -57,3 +57,67 @@ int query(vector<int>segTree, vector<int> arr, int node, int start, int end, int
 		return (p1+p2);
 	}
 }
+
+void updateRange(vector<int>segTree, vector<int>arr, vector<int>lazy, int node , int start, int end, int l, int r, int val)
+{
+	if(lazy[node])
+	{
+		segTree[node] += (end-start+1)*lazy[node];
+		if(start!=end)
+		{
+			// mark children
+			lazy[R_CHILD(node)] += lazy[node];
+			lazy[L_CHILD(node)] += lazy[node];	
+		}
+
+		lazy[node] = 0;
+	}
+
+	if(r<start || l>end)
+		return;
+
+	if(l<=start && r>=end)
+	{
+		segTree[node] += (end-start+1)*val;
+		if(start != end)
+		{
+			lazy[L_CHILD(node)] += val;
+			lazy[R_CHILD(node)] += val;
+		}
+		return;
+	}
+
+	// when partial
+	int mid = (start + end)/2;
+	updateRange(segTree, arr, lazy, L_CHILD(node), start, mid, l, r, val);
+	updateRange(segTree, arr, lazy, R_CHILD(node), mid+1, end, l, r, val);
+	segTree[node] = segTree[L_CHILD(node)] + segTree[R_CHILD(node)]; 
+}
+
+
+int queryRange(vector<int>segTree, vector<int>arr, vector<int>lazy, int node, int start, int end, int qleft, int qright)
+{
+	if(lazy[node])
+	{
+		segTree[node] += (end-start+1)*lazy[node];
+		if(start!=end)
+		{
+			// mark children
+			lazy[R_CHILD(node)] += lazy[node];
+			lazy[L_CHILD(node)] += lazy[node];	
+		}
+
+		lazy[node] = 0;
+	}
+
+	if(qright<start || qleft>end)
+		return 0;
+
+	if(qleft<=start || qright>=end)
+		return segTree[node];
+
+	int mid = (start+end)/2;
+	int p1 = queryRange(segTree,arr,lazy,node,start,mid,qleft,qright);
+	int p2 = queryRange(segTree,arr,lazy,node,mid+1,end,qleft,qright);
+	return (p1+p2);
+}
