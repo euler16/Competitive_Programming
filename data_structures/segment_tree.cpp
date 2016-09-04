@@ -42,3 +42,18 @@ void update(vector<int> segTree, vector<int>arr, int val ,int index, int node, i
 	}
 }
 
+int query(vector<int>segTree, vector<int> arr, int node, int start, int end, int qleft, int qright)
+{
+	if(qleft>end || qright<start)  // query range out of the node range
+		return 0;
+	else if(l<=start && r>=end)  // node range inside query range
+		return segTree[node];
+
+	else    // range is partially inside this node .... returns the portion inside the node range
+	{
+		int mid = (start + end)/2;
+		int p1 = query(segTree,arr,L_CHILD(node), start,mid+1,qleft, qright);
+		int p2 = query(segTree,arr,R_CHILD(node), mid+1,end,qleft, qright);
+		return (p1+p2);
+	}
+}
