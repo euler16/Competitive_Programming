@@ -1,112 +1,109 @@
-/*Ashu and Shanu are best buddies. One day Shanu gives Ashu a problem to test his intelligence.
-He gives him an array of N natural numbers and asks him to solve the following queries:-
-
-Query 0:- modify the element present at index i to x.
-Query 1:- count the number of even numbers in range l to r inclusive.
-Query 2:- count the number of odd numbers in range l to r inclusive.
-
-input:
-First line of the input contains the number N. Next line contains N natural numbers.
-Next line contains an integer Q followed by Q queries.
-0 x y - modify the number at index x to y.
-1 x y - count the number of even numbers in range l to r inclusive.
-2 x y - count the number of odd numbers in range l to r inclusive.
-
-Constraints:
-1<=N,Q<=10^5
-1<=l<=r<=N
-0<=Ai<=10^9
-1<=x<=N
-0<=y<=10^9
-
-Note:- indexing starts from 1.*/
-
 # include <iostream>
 # include <cstdio>
-# include <vector>
 # include <utility>
+# include <vector>
+
+# define L_CHILD(i) 2*i
+# define R_CHILD(i) 2*i+1
+# define isEven(i) ((i%2)==0)
+# define isOdd(i)  ((i%2)==1)
 
 using namespace std;
+vector<pair<int,int>>segTree(300000+4);
+vector<long long>arr(200000+2);
+void build(int node, int start, int end)
+{
+	//cout<<start<<" "<<end<<endl;
+	if(start == end)
+	{
+		//cout<<"In here leaf"<<endl;
+		segTree[node].first = (arr[start]%2==0)?1:0;
+		segTree[node].second = (arr[start]%2==0)?0:1;
+		return;
+	}
 
-// not a lazy problem - lazy only for range updation
-/*vector<pair<int,int>>lazy(200000+2);*/
-vector<pair<long long,long long>>segTree(200000+2);
-vector<long long>arr(100000+1);
+	int mid = (start+end)/2;
+	build(L_CHILD(node),start,mid);
+	build(R_CHILD(node),mid+1,end);
+	segTree[node].first = segTree[L_CHILD(node)].first + segTree[R_CHILD(node)].first;
+	segTree[node].second = segTree[L_CHILD(node)].second + segTree[R_CHILD(node)].second;
+}
 
-// lazy will store num even and num odd
-// first is for odd second is for even
-void build(int node, int start,int end)
+void update(int index, long long value, int node, int start, int end)
 {
 	if(start == end)
 	{
-		segTree[node].first = (arr[start]%2 == 0)?1:0;
-		segTree[node].second = (arr[start]%2 == 0)?0:1;
-	}
-	else
-	{
-		int mid = (start+end)/2;
-		build(2*node,start, mid);
-		build(2*node+1,mid+1,end);
-		segTree[node].first = segTree[2*node].first + segTree[2*node+1].first; // check what is the sum of two pairs equal to
-		segTree[node].second = segTree[2*node].second + segTree[2*node+1].second;	
-	}
-}
-// lazy node will store number of even or odd
-void update(int node, int start, int end, int x, int y)
-{
-	// modify index x to y
-	if(start == end)   // start == x
-	{
-		arr[start] = y;
-		if( ((arr[x]%2)==0) && ((y%2)==1) ) // y is odd
+		// start is equal to index
+		int temp = arr[index];
+		arr[index] = value;
+		if(isEven(temp) && isOdd(value))
 		{
-			segTree[node].first -= 1;
-			segTree[node].second += 1;
+			segTree[node].first--;
+			segTree[node].second++;
 		}
-		else if( ((arr[x]%2)==0) && ((y%2)==1) )
+		else if(isOdd(temp) && isEven(value))
 		{
-			segTree[node].first += 1;
-			segTree[node].second -= 1;
+			segTree[node].first++;
+			segTree[node].second--;	
 		}
 		return;
-	}	
+	}
 
-	int mid = (start + end)/2;
-	if(start<=x && mid>=x)
-		update(2*node,start,mid,x,y);
-	else
-		update(2*node+1,mid+1,start,x,y);
-	
-	segTree[node].first = segTree[2*node].first + segTree[2*node+1].first; // check what is the sum of two pairs equal to
-	segTree[node].second = segTree[2*node].second + segTree[2*node+1].second;
-	return;
+	int mid = (start+end)/2;
+	if((index<=mid) && (index>=start))
+		update(index,value,L_CHILD(node),start,mid);
+	else if((index>=mid+1) && (index<=end))
+		update(index,value,R_CHILD(node),mid+1,end);
+
+	segTree[node].first = segTree[L_CHILD(node)].first + segTree[R_CHILD(node)].first; 
+	segTree[node].second = segTree[L_CHILD(node)].second + segTree[R_CHILD(node)].second;
+}
+
+int queryEven(int node, int start, int end, int qleft, int qright)
+{
+	if((qleft>end) || (qright<start))
+		return 0;
+	else if((qleft<=start) && (qright>=end))
+		return segTree[node].first;
+
+	int mid = (start+end)/2;
+	return queryEven(L_CHILD(node),start,mid,qleft,qright) + queryEven(R_CHILD(node),mid+1,end,qleft,qright); 
+}
+
+int queryOdd(int node, int start, int end, int qleft, int qright)
+{
+	if((qleft>end) || (qright<start))
+		return 0;
+	else if((qleft<=start) && (qright>=end))
+		return segTree[node].second;
+
+	int mid = (start+end)/2;
+	return queryOdd(L_CHILD(node),start,mid,qleft,qright) + queryOdd(R_CHILD(node),mid+1,end,qleft,qright); 
 }
 
 int main()
 {
-	int N = 0,Q = 0;
-	int query = 0, x = 0, y = 0;
+	int N = 0,Q = 0,queries = 0,x = 0;
+	long long y = 0;
 	scanf("%d",&N);
-	for(int i = 0;i<N;i++)
-		scanf("%d",&arr[i]);
+	for(int i=0;i<N;++i)
+		scanf("%lld",&arr[i]);
 
 	build(1,0,N-1);
-	scanf("%d",&Q);
+	/*cout<<endl<<endl;
+	for(auto elem:segTree)
+		cout<<elem.first<<" "<<elem.second<<endl;*/
 
+	scanf("%d",&Q);
 	while(Q--)
 	{
-		scanf("%d %d %d",&query,x,y);
-		if(query == 0)
-		{
+		scanf("%d %d %lld",&queries,&x,&y);
 
-		}
-		else if(query == 1)
-		{
-
-		}
-		else if(query == 2)
-		{
-
-		}
+		if(queries == 0)
+			update(x-1,y,1,0,N-1);
+		else if(queries == 1)
+			printf("%d\n",queryEven(1,0,N-1,x-1,(int)y-1));
+		else
+			printf("%d\n",queryOdd(1,0,N-1,x-1,(int)y-1));
 	}
 }
