@@ -33,7 +33,7 @@ void update(vector<int> segTree, vector<int>arr, int val ,int index, int node, i
 
 	else
 	{
-		int mid = (start + mid)/2;
+		int mid = (start + end)/2;
 		if(start<=index && index<=mid)
 			update(segTree,arr,val,index,L_CHILD(node),start,mid);
 		else
@@ -47,7 +47,7 @@ int query(vector<int>segTree, vector<int> arr, int node, int start, int end, int
 {
 	if(qleft>end || qright<start)  // query range out of the node range
 		return 0;
-	else if(l<=start && r>=end)  // node range inside query range
+	else if(qleft<=start && qright>=end)  // node range inside query range
 		return segTree[node];
 
 	else    // range is partially inside this node .... returns the portion inside the node range
